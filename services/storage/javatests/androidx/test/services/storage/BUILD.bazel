@@ -43,6 +43,7 @@ android_library(
         "//services/storage/java/androidx/test/services/storage/file",
         "@androidsdk//:legacy_test-30",
         "@maven//:com_google_guava_guava",
+        "@maven//:com_google_truth_truth",
         "@maven//:junit_junit",
     ],
 )

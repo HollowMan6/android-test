@@ -15,6 +15,7 @@
  */
 package androidx.test.services.storage;
 
+import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 
@@ -22,10 +23,12 @@ import android.net.Uri;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.services.storage.file.HostedFile;
 import androidx.test.services.storage.testapp.DummyActivity;
+import com.google.common.io.CharStreams;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -52,7 +55,7 @@ public final class TestStorageTest {
   }
 
   @Test
-  public void testReadNonExistentFile() {
+  public void readNonExistentInputFile() {
     try {
       testStorage.openInputFile("not/here");
       fail("Should throw FileNotFoundException.");
@@ -62,7 +65,7 @@ public final class TestStorageTest {
   }
 
   @Test
-  public void testWriteFile() throws Exception {
+  public void writeFile() throws Exception {
     OutputStream rawStream = testStorage.openOutputFile(OUTPUT_PATH);
     Writer writer = new BufferedWriter(new OutputStreamWriter(rawStream));
     try {
@@ -74,7 +77,7 @@ public final class TestStorageTest {
   }
 
   @Test
-  public void testAddOutputProperties() throws Exception {
+  public void addOutputProperties() throws Exception {
     Map<String, Serializable> propertyMap = new HashMap<String, Serializable>();
     propertyMap.put("property-a", "test");
     // Pass in a cloned copy since addStatsToSponge may modify the propertyMap instance.
@@ -98,6 +101,25 @@ public final class TestStorageTest {
     }
   }
 
+
+  @Test
+  public void readAndWriteInternalFile() throws Exception {
+    OutputStream rawStream = testStorage.openInternalOutputStream(OUTPUT_PATH);
+    Writer writer = new BufferedWriter(new OutputStreamWriter(rawStream));
+    try {
+      writer.write("Four score and 7 years ago\n");
+      writer.write("Our forefathers executed some tests.");
+    } finally {
+      writer.close();
+    }
+
+    // Checks the content is correctly written.
+    try (InputStream in = testStorage.openInternalInputStream(OUTPUT_PATH)) {
+      String content = CharStreams.toString(new InputStreamReader(in));
+      assertThat(content)
+          .isEqualTo("Four score and 7 years ago\nOur forefathers executed some tests.");
+    }
+  }
 
   private void closeInputStream(ObjectInputStream in) {
     if (in != null) {
